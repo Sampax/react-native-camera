@@ -287,8 +287,9 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
         mMediaRecorder.setOrientationHint(RCTCamera.getInstance().getAdjustedDeviceOrientation());
 
         // Set video output format and encoding using CamcorderProfile.
-        cm.fileFormat = MediaRecorder.OutputFormat.MPEG_4;
-        mMediaRecorder.setProfile(cm);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
 
         // Set video output file.
         mVideoFile = null;

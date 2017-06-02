@@ -40,6 +40,7 @@ public class RCTCamera {
             try {
                 Camera camera = Camera.open(_cameraTypeToIndex.get(type));
                 _cameras.put(type, camera);
+                setVideoStabilization(type);
                 adjustPreviewLayout(type);
             } catch (Exception e) {
                 Log.e("RCTCamera", "acquireCameraInstance failed", e);
@@ -343,6 +344,19 @@ public class RCTCamera {
             parameters.setFlashMode(value);
             camera.setParameters(parameters);
         }
+    }
+
+    public void setVideoStabilization(int type) {
+        Camera camera = _cameras.get(type);
+        if (null == camera) {
+            return;
+        }
+
+        Camera.Parameters parameters = camera.getParameters();
+        if (parameters.isVideoStabilizationSupported()) {
+            parameters.setVideoStabilization(true);
+        }
+        camera.setParameters(parameters);
     }
 
     public void adjustCameraRotationToDeviceOrientation(int type, int deviceOrientation) {
