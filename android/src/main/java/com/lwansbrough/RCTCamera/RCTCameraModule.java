@@ -288,7 +288,7 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
 
         // Set video output format and encoding using CamcorderProfile.
         cm.videoCodec = MediaRecorder.VideoEncoder.H264;
-        cm.audioCodec = MediaRecorder.AudioEncoder.DEFAULT;
+        cm.audioCodec = MediaRecorder.AudioEncoder.AAC;
         cm.audioChannels = 2;
         cm.audioBitRate = 96000;
         cm.audioSampleRate = 44100;
