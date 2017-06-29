@@ -8,6 +8,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.support.annotation.NonNull;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.os.AsyncTask;
@@ -21,6 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
@@ -132,6 +136,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
 
     synchronized private void startCamera() {
         if (!_isStarting) {
+            executor = Executors.newSingleThreadExecutor();
             _isStarting = true;
             try {
                 _camera = RCTCamera.getInstance().acquireCameraInstance(_cameraType);
@@ -189,14 +194,15 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
 
     synchronized private void stopCamera() {
         if (!_isStopping) {
+            executor.shutdownNow();
             _isStopping = true;
             try {
                 if (_camera != null) {
                     _camera.stopPreview();
                     // stop sending previews to `onPreviewFrame`
                     _camera.setPreviewCallback(null);
-                    RCTCamera.getInstance().releaseCameraInstance(_cameraType);
                     _camera = null;
+                    RCTCamera.getInstance().releaseCameraInstance(_cameraType);
                 }
 
             } catch (Exception e) {
@@ -282,10 +288,12 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
      *
      * See {Camera.PreviewCallback}
      */
+
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
     public void onPreviewFrame(byte[] data, Camera camera) {
-        if (RCTCamera.getInstance().isBarcodeScannerEnabled() && !RCTCameraViewFinder.barcodeScannerTaskLock) {
+        if (RCTCamera.getInstance().isBarcodeScannerEnabled() && !RCTCameraViewFinder.barcodeScannerTaskLock && !executor.isShutdown()) {
             RCTCameraViewFinder.barcodeScannerTaskLock = true;
-            new ReaderAsyncTask(camera, data).execute();
+            new ReaderAsyncTask(camera, data).executeOnExecutor(executor);
         }
     }
 
@@ -346,6 +354,9 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         // Get the pointer ID
+        if (_camera == null) {
+            return true;
+        }
         Camera.Parameters params = _camera.getParameters();
         int action = event.getAction();
 
@@ -394,6 +405,9 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
      * specific focus intent, we shouldn't be refocusing and overriding their request!
      */
     public void handleFocus(MotionEvent event, Camera.Parameters params) {
+        if (_camera == null) {
+            return;
+        }
         List<String> supportedFocusModes = params.getSupportedFocusModes();
         if (supportedFocusModes != null && supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
             // Ensure focus areas are enabled. If max num focus areas is 0, then focus area is not
