@@ -15,6 +15,7 @@
 
 @property (strong, nonatomic) RCTSensorOrientationChecker * sensorOrientationChecker;
 @property (assign, nonatomic) NSInteger* flashMode;
+@property (copy, nonatomic) NSString* quality;
 
 @end
 
@@ -199,6 +200,14 @@ RCT_CUSTOM_VIEW_PROPERTY(type, NSInteger, RCTCamera) {
       }
 
       self.presetCamera = type;
+      
+      if (position == AVCaptureDevicePositionFront) {
+        // Set automatic quality selection
+        [self applyCaptureQuality: @"high"];
+      } else {
+        // Set quality to originally requested
+       [self applyCaptureQuality: self.quality];
+      }
 
       NSError *error = nil;
       AVCaptureDeviceInput *captureDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:captureDevice error:&error];
@@ -1023,15 +1032,19 @@ didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL
 
 - (void)setCaptureQuality:(NSString *)quality
 {
-    #if !(TARGET_IPHONE_SIMULATOR)
-        if (quality) {
-            [self.session beginConfiguration];
-            if ([self.session canSetSessionPreset:quality]) {
-                self.session.sessionPreset = quality;
-            }
-            [self.session commitConfiguration];
-        }
-    #endif
+  self.quality = quality;
+}
+
+- (void)applyCaptureQuality:(NSString *)quality {
+#if !(TARGET_IPHONE_SIMULATOR)
+  if (quality) {
+    [self.session beginConfiguration];
+    if ([self.session canSetSessionPreset:quality]) {
+      self.session.sessionPreset = quality;
+    }
+    [self.session commitConfiguration];
+  }
+#endif
 }
 
 @end
