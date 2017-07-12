@@ -289,8 +289,12 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
         // Adjust for orientation.
         // orientation name             P       L       P2      L2
         // device orientation           0       1       2       3
-        // current layout orientation   1/3     1       1/3     3
-        int currentOrientation = ((WindowManager) getReactApplicationContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+        // current layout orientation   1|3     1       1|3     3
+        // Legend - P = portrait, L = landscape, P2 - portrait upside down, L2 - landscape with phone bottom on the left
+        // 1|3 means that UI (locked to landscape) can be in two states Landscape or Landscape2.
+        // 0 = means 0 degrees from natural orientation
+        // 1, 2, 3 = mean 90, 180, 270 degrees from natural orientation accordingly
+        int currentOrientation = ((WindowManager) getReactApplicationContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getOrientation();
         int adjustOrientation = currentOrientation - currentDeviceOrientation;
         if (currentOrientation == 3) {
             adjustOrientation = 2 + adjustOrientation;
@@ -298,7 +302,10 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
         if (adjustOrientation < 0) {
             adjustOrientation += 4;
         }
-        mMediaRecorder.setOrientationHint((adjustOrientation * 90) % 360);
+        // LG Nexus (Google soft) rotates properly = clockwise
+        // LG K10 (not Google soft) rotates counter clockwise = manufacturer/software bug
+        // When I need to rotate by -90 (negative values are not accepted) then adding 180 to 90 to rotate by 270 which is equivalent of -90.
+        mMediaRecorder.setOrientationHint((adjustOrientation * 90 + 180) % 360);
 
         // Set video output format and encoding using CamcorderProfile.
         cm.videoCodec = MediaRecorder.VideoEncoder.H264;
