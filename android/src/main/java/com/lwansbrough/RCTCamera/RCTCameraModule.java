@@ -6,6 +6,7 @@
 package com.lwansbrough.RCTCamera;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.hardware.Camera;
 import android.media.*;
 import android.net.Uri;
@@ -15,6 +16,7 @@ import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Surface;
+import android.view.WindowManager;
 
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
@@ -81,6 +83,7 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
     private Promise mRecordingPromise = null;
     private ReadableMap mRecordingOptions;
     private Boolean mSafeToCapture = true;
+    private int currentDeviceOrientation = 0;
 
     public RCTCameraModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -284,7 +287,18 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
         // Adjust for orientation.
-        mMediaRecorder.setOrientationHint(RCTCamera.getInstance().getAdjustedDeviceOrientation());
+        // orientation name             P       L       P2      L2
+        // device orientation           0       1       2       3
+        // current layout orientation   1/3     1       1/3     3
+        int currentOrientation = ((WindowManager) getReactApplicationContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+        int adjustOrientation = currentOrientation - currentDeviceOrientation;
+        if (currentOrientation == 3) {
+            adjustOrientation = 2 + adjustOrientation;
+        }
+        if (adjustOrientation < 0) {
+            adjustOrientation += 4;
+        }
+        mMediaRecorder.setOrientationHint((adjustOrientation * 90) % 360);
 
         // Set video output format and encoding using CamcorderProfile.
         cm.videoCodec = MediaRecorder.VideoEncoder.H264;
@@ -496,6 +510,7 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
                 @Override
                 public void orientationEvent() {
                     int deviceOrientation = _sensorOrientationChecker.getOrientation();
+                    currentDeviceOrientation = deviceOrientation;
                     _sensorOrientationChecker.unregisterOrientationListener();
                     _sensorOrientationChecker.onPause();
                     captureWithOrientation(options, promise, deviceOrientation);
