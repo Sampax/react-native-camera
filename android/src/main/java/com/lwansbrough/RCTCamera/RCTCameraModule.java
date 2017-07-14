@@ -267,6 +267,13 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
             return new RuntimeException("CamcorderProfile not found in prepareMediaRecorder.");
         }
 
+        // Set auto focus
+        boolean autoFocus = options.hasKey("autoFocus") ? options.getBoolean("autoFocus") : false;
+        RCTCamera.getInstance().setAutoFocus(options.getInt("type"), autoFocus);
+        // Set image stabilization
+        boolean stabilization = options.hasKey("stabilization") ? options.getBoolean("stabilization") : false;
+        RCTCamera.getInstance().setVideoStabilization(options.getInt("type"), stabilization);
+
         // Unlock camera to make available for MediaRecorder. Note that this statement must be
         // executed before calling setCamera when configuring the MediaRecorder instance.
         mCamera.unlock();

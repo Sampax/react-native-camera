@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.lang.Math;
 
+import static android.hardware.Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO;
+import static android.hardware.Camera.Parameters.FOCUS_MODE_FIXED;
+
 public class RCTCamera {
     private static RCTCamera ourInstance;
     private final HashMap<Integer, CameraInfoWrapper> _cameraInfos;
@@ -34,13 +37,11 @@ public class RCTCamera {
         ourInstance = new RCTCamera(deviceOrientation);
     }
 
-
     public synchronized Camera acquireCameraInstance(int type) {
         if (null == _cameras.get(type) && null != _cameraTypeToIndex.get(type)) {
             try {
                 Camera camera = Camera.open(_cameraTypeToIndex.get(type));
                 _cameras.put(type, camera);
-                setVideoStabilization(type);
                 adjustPreviewLayout(type);
             } catch (Exception e) {
                 Log.e("RCTCamera", "acquireCameraInstance failed", e);
@@ -346,16 +347,39 @@ public class RCTCamera {
         }
     }
 
-    public void setVideoStabilization(int type) {
+    public void setVideoStabilization(int type, boolean on) {
         Camera camera = _cameras.get(type);
         if (null == camera) {
             return;
         }
 
         Camera.Parameters parameters = camera.getParameters();
-        if (parameters.isVideoStabilizationSupported()) {
+        if (on && parameters.isVideoStabilizationSupported()) {
             parameters.setVideoStabilization(true);
+        } else {
+            parameters.setVideoStabilization(false);
         }
+        camera.setParameters(parameters);
+    }
+
+    public void setAutoFocus(int type, boolean on) {
+        Camera camera = _cameras.get(type);
+        if (null == camera) {
+            return;
+        }
+
+        Camera.Parameters parameters = camera.getParameters();
+        List<String> availableModes = parameters.getSupportedFocusModes();
+        if (on) {
+            if (availableModes.contains(FOCUS_MODE_CONTINUOUS_VIDEO)) {
+                parameters.setFocusMode(FOCUS_MODE_CONTINUOUS_VIDEO);
+            }
+        } else {
+            if (availableModes.contains(FOCUS_MODE_FIXED)) {
+                parameters.setFocusMode(FOCUS_MODE_FIXED);
+            }
+        }
+
         camera.setParameters(parameters);
     }
 
