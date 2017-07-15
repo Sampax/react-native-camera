@@ -115,7 +115,9 @@ export default class Camera extends Component {
     type: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number
-    ])
+    ]),
+    stabilization: PropTypes.bool,
+    autoFocus: PropTypes.bool
   };
 
   static defaultProps = {

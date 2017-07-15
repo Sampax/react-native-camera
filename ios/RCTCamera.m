@@ -16,6 +16,9 @@
 @property (nonatomic, weak) RCTBridge *bridge;
 @property (nonatomic, strong) RCTCameraFocusSquare *camFocus;
 
+@property (nonatomic, assign) BOOL stabilization;
+@property (nonatomic, assign) BOOL autoFocus;
+
 @end
 
 @implementation RCTCamera

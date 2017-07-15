@@ -134,6 +134,8 @@ RCT_EXPORT_VIEW_PROPERTY(orientation, NSInteger);
 RCT_EXPORT_VIEW_PROPERTY(defaultOnFocusComponent, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(onFocusChanged, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(onZoomChanged, BOOL);
+RCT_EXPORT_VIEW_PROPERTY(stabilization, BOOL);
+RCT_EXPORT_VIEW_PROPERTY(autoFocus, BOOL);
 
 RCT_CUSTOM_VIEW_PROPERTY(captureQuality, NSInteger, RCTCamera) {
   NSInteger quality = [RCTConvert NSInteger:json];
@@ -450,7 +452,13 @@ RCT_EXPORT_METHOD(hasFlash:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRej
       self.movieFileOutput = movieFileOutput;
       
       AVCaptureConnection *connection = [movieFileOutput connectionWithMediaType:AVMediaTypeVideo];
-      [connection setPreferredVideoStabilizationMode:AVCaptureVideoStabilizationModeAuto];
+
+      if (self.camera.stabilization) {
+        [connection setPreferredVideoStabilizationMode:AVCaptureVideoStabilizationModeAuto];
+      } else {
+        [connection setPreferredVideoStabilizationMode:AVCaptureVideoStabilizationModeOff];
+      }
+      
       [movieFileOutput setOutputSettings:@{AVVideoCodecKey : AVVideoCodecH264} forConnection:connection];
     }
 
