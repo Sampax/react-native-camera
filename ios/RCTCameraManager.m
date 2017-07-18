@@ -307,8 +307,11 @@ RCT_CUSTOM_VIEW_PROPERTY(barCodeTypes, NSArray, RCTCamera) {
 RCT_CUSTOM_VIEW_PROPERTY(captureAudio, BOOL, RCTCamera) {
   BOOL captureAudio = [RCTConvert BOOL:json];
   if (captureAudio) {
-    RCTLog(@"capturing audio");
+    RCTLog(@"enable capturing audio");
     [self initializeCaptureSessionInput:AVMediaTypeAudio];
+  } else {
+    RCTLog(@"disable capturing audio");
+    [self deinitializeAudio];
   }
 }
 
@@ -556,6 +559,17 @@ RCT_EXPORT_METHOD(hasFlash:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRej
 
     [self.session commitConfiguration];
   });
+}
+
+- (void)deinitializeAudio {
+    dispatch_async(self.sessionQueue, ^{
+        if (self.audioCaptureDeviceInput != nil) {
+            [self.session beginConfiguration];
+            [self.session removeInput:self.audioCaptureDeviceInput];
+            self.audioCaptureDeviceInput = nil;
+            [self.session commitConfiguration];
+        }
+    });
 }
 
 - (void)captureStill:(NSInteger)target options:(NSDictionary *)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
