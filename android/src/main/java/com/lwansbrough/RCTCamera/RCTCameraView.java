@@ -135,7 +135,7 @@ public class RCTCameraView extends ViewGroup {
     }
 
     private int getDeviceOrientation(Context context) {
-        return ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+        return ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getOrientation();
     }
 
     private void layoutViewFinder() {
